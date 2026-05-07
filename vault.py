@@ -213,7 +213,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     except PermissionError as exc:
         print(f"{Fore.RED}{exc}{Style.RESET_ALL}")
         return 3
-    except Exception as exc:
+    except (FileNotFoundError, FileExistsError, ValueError, OSError) as exc:
         print(f"{Fore.YELLOW}Operation failed:{Style.RESET_ALL} {exc}")
         return 1
 
