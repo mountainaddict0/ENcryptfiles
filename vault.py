@@ -157,6 +157,7 @@ def encrypt_path(input_path: Path, output_path: Path, force: bool) -> None:
         out.write(metadata)
         out.write(ciphertext)
 
+    # Verify vault integrity before deleting source plaintext data.
     read_vault(output_path)
     secure_delete_path(input_path)
     print(f"Locked successfully: {output_path}")
@@ -225,7 +226,7 @@ def decrypt_vault(
     try:
         payload = AESGCM(key).decrypt(nonce, ciphertext, metadata_bytes)
     except InvalidTag:
-        print("Security Alert: Incorrect Key")
+        print("Security Alert: Incorrect Key", file=sys.stderr)
         raise SystemExit(1) from None
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
