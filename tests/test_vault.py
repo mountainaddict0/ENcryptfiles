@@ -34,7 +34,8 @@ class VaultTests(unittest.TestCase):
             self.assertTrue(vault_path.exists())
             self.assertFalse(folder.exists())
 
-            unlock_path(str(vault_path), "safe-pass")
+            out_path = unlock_path(str(vault_path), "safe-pass")
+            self.assertEqual(out_path, root)
             self.assertEqual((root / "docs" / "a.txt").read_text(encoding="utf-8"), "alpha")
             self.assertEqual((root / "docs" / "sub" / "b.txt").read_text(encoding="utf-8"), "beta")
 

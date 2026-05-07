@@ -2,12 +2,11 @@
 import argparse
 import io
 import os
-import shutil
 import struct
 import sys
 import tarfile
 from getpass import getpass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import List, Optional, Tuple
 
 from cryptography.exceptions import InvalidTag
@@ -32,6 +31,7 @@ except Exception:  # pragma: no cover
 
 
 MAGIC = b"EVLT1"
+VAULT_EXTENSION = ".vault"
 FLAG_DIR = 1
 FLAG_FILE = 0
 SALT_LEN = 16
@@ -106,24 +106,20 @@ def _safe_extract_tar(archive_bytes: bytes, destination: Path) -> None:
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as tar:
         for member in tar.getmembers():
             target = destination / member.name
-            target_resolved = target.resolve()
-            if os.path.commonpath([str(destination_resolved), str(target_resolved)]) != str(destination_resolved):
+            if not target.resolve().is_relative_to(destination_resolved):
                 raise ValueError("Unsafe archive content detected.")
-        top_names = {m.name.split("/", 1)[0] for m in tar.getmembers() if m.name}
+        top_names = {PurePosixPath(m.name).parts[0] for m in tar.getmembers() if m.name}
         for top_name in top_names:
             if (destination / top_name).exists():
                 raise FileExistsError(f"Refusing to overwrite existing path: {top_name}")
-        try:
-            tar.extractall(destination, filter="data")
-        except TypeError:  # pragma: no cover
-            tar.extractall(destination)
+        tar.extractall(destination, filter="data")
 
 
 def lock_path(path_text: str, password: str) -> Path:
     src = Path(path_text).resolve()
     if not src.exists():
         raise FileNotFoundError(f"Path not found: {src}")
-    out_path = src.with_name(src.name.rstrip("/\\") + ".vault")
+    out_path = src.with_name(src.name.rstrip("/\\") + VAULT_EXTENSION)
     if out_path.exists():
         raise FileExistsError(f"Vault already exists: {out_path}")
 
@@ -161,7 +157,7 @@ def unlock_path(path_text: str, password: str) -> Path:
         raise PermissionError("Security Alert: Incorrect Key") from exc
 
     if flag == FLAG_FILE:
-        out_path = vault_path.with_name(vault_path.name[:-6]) if vault_path.name.endswith(".vault") else vault_path.with_suffix(".decrypted")
+        out_path = _file_unlock_output_path(vault_path)
         if out_path.exists():
             raise FileExistsError(f"Refusing to overwrite existing file: {out_path}")
         out_path.write_bytes(payload)
@@ -178,6 +174,12 @@ def _parser() -> argparse.ArgumentParser:
     group.add_argument("--lock", metavar="PATH", help="Encrypt file/folder into a .vault archive.")
     group.add_argument("--unlock", metavar="PATH", help="Decrypt a .vault file.")
     return parser
+
+
+def _file_unlock_output_path(vault_path: Path) -> Path:
+    if vault_path.name.endswith(VAULT_EXTENSION):
+        return vault_path.with_name(vault_path.name[: -len(VAULT_EXTENSION)])
+    return vault_path.with_suffix(".decrypted")
 
 
 def main(argv: Optional[List[str]] = None) -> int:
