@@ -74,6 +74,7 @@ def secure_delete_directory(path: Path) -> None:
 
 
 def secure_delete_path(path: Path) -> None:
+    """Route secure deletion to file or directory handlers."""
     if path.is_file() or path.is_symlink():
         secure_delete_file(path)
     elif path.is_dir():
@@ -101,6 +102,7 @@ def safe_extract_tar_gz(tar_bytes: bytes, destination: Path) -> None:
 
 
 def normalize_name(path: Path) -> str:
+    """Return basename used for metadata and default restore target."""
     return path.name
 
 
