@@ -50,6 +50,7 @@ def secure_delete_file(path: Path) -> None:
     try:
         handle = path.open("r+b", buffering=0)
     except ValueError:
+        # Some file types/filesystems reject unbuffered binary access; fall back safely.
         handle = path.open("r+b")
     with handle:
         remaining = length
@@ -234,9 +235,9 @@ def decrypt_vault(
         with tempfile.TemporaryDirectory(dir=str(output_path.parent)) as temp_dir:
             temp_root = Path(temp_dir)
             safe_extract_tar_gz(payload, temp_root)
-            children = [item for item in temp_root.iterdir()]
+            children = list(temp_root.iterdir())
             if len(children) != 1 or not children[0].is_dir():
-                raise VaultError("Decrypted folder archive structure is invalid.")
+                raise VaultError(f"Invalid archive: expected one root directory, found {len(children)} items.")
             extracted_root = children[0]
             if output_path.exists():
                 if output_path.is_dir():
