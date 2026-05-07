@@ -19,15 +19,15 @@ try:
 
     colorama_init(autoreset=True)
 except Exception:  # pragma: no cover
-    class _C:
+    class _DummyColors:
         RED = ""
         GREEN = ""
         CYAN = ""
         YELLOW = ""
         RESET_ALL = ""
 
-    Fore = _C()
-    Style = _C()
+    Fore = _DummyColors()
+    Style = _DummyColors()
 
 
 MAGIC = b"EVLT1"
