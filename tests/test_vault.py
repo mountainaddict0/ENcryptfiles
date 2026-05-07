@@ -53,6 +53,14 @@ class VaultTests(unittest.TestCase):
             self.assertTrue(vault_path.exists())
             self.assertEqual(vault_path.stat().st_size, vault_size_before)
 
+    def test_invalid_magic_header(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bad_vault = root / "bad.vault"
+            bad_vault.write_bytes(b"NOTVAULT" + (b"\x00" * 128))
+            with self.assertRaisesRegex(ValueError, "Invalid vault file magic"):
+                unlock_path(str(bad_vault), "any-password")
+
     def test_main_unlock_cli_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -65,6 +73,20 @@ class VaultTests(unittest.TestCase):
 
             self.assertEqual(code, 0)
             self.assertEqual((root / "entry.txt").read_text(encoding="utf-8"), "entry test")
+
+    def test_main_unlock_cli_wrong_password(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "entry2.txt"
+            source.write_text("entry test 2", encoding="utf-8")
+            vault_path = lock_path(str(source), "cli-pass")
+
+            with patch("vault.getpass", return_value="bad-pass"):
+                code = main(["--unlock", str(vault_path)])
+
+            self.assertEqual(code, 3)
+            self.assertFalse((root / "entry2.txt").exists())
+            self.assertTrue(vault_path.exists())
 
     def test_main_lock_cli_path(self):
         with tempfile.TemporaryDirectory() as tmp:

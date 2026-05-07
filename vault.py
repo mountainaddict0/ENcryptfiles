@@ -37,7 +37,7 @@ FLAG_FILE = 0
 SALT_LEN = 16
 NONCE_LEN = 12
 KEY_LEN = 32
-PBKDF2_ITERATIONS = 390000
+PBKDF2_ITERATIONS = 600000
 
 
 def _derive_key(password: str, salt: bytes) -> bytes:
