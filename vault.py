@@ -46,8 +46,12 @@ def secure_delete_file(path: Path) -> None:
         path.unlink()
         return
     length = path.stat().st_size
-    with path.open("r+b", buffering=0) as handle:
-        chunk = b"\x00" * 1024 * 1024
+    chunk = b"\x00" * 1024 * 1024
+    try:
+        handle = path.open("r+b", buffering=0)
+    except ValueError:
+        handle = path.open("r+b")
+    with handle:
         remaining = length
         while remaining > 0:
             to_write = min(len(chunk), remaining)
@@ -96,7 +100,11 @@ def safe_extract_tar_gz(tar_bytes: bytes, destination: Path) -> None:
         dest_root = destination.resolve()
         for member in tar.getmembers():
             target = (destination / member.name).resolve()
-            if os.path.commonpath([str(dest_root), str(target)]) != str(dest_root):
+            try:
+                is_safe = os.path.commonpath([str(dest_root), str(target)]) == str(dest_root)
+            except ValueError:
+                is_safe = False
+            if not is_safe:
                 raise VaultError("Unsafe archive path detected.")
         tar.extractall(path=destination)
 
@@ -148,6 +156,7 @@ def encrypt_path(input_path: Path, output_path: Path, force: bool) -> None:
         out.write(metadata)
         out.write(ciphertext)
 
+    read_vault(output_path)
     secure_delete_path(input_path)
     print(f"Locked successfully: {output_path}")
 
