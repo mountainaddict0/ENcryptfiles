@@ -52,9 +52,15 @@ def _secure_delete_file(path: Path) -> None:
     if not path.is_file():
         return
     size = path.stat().st_size
+    block_size = 64 * 1024
     with path.open("r+b", buffering=0) as fh:
         fh.seek(0)
-        fh.write(b"\x00" * size)
+        remaining = size
+        zero_block = b"\x00" * block_size
+        while remaining > 0:
+            chunk = zero_block[: min(block_size, remaining)]
+            fh.write(chunk)
+            remaining -= len(chunk)
         fh.flush()
         os.fsync(fh.fileno())
     path.unlink()
@@ -108,7 +114,12 @@ def _safe_extract_tar(archive_bytes: bytes, destination: Path) -> None:
             target = destination / member.name
             if not target.resolve().is_relative_to(destination_resolved):
                 raise ValueError("Unsafe archive content detected.")
-        top_names = {PurePosixPath(m.name).parts[0] for m in tar.getmembers() if m.name}
+        top_names = set()
+        for member in tar.getmembers():
+            cleaned_name = member.name.lstrip("/")
+            if not cleaned_name:
+                continue
+            top_names.add(PurePosixPath(cleaned_name).parts[0])
         for top_name in top_names:
             if (destination / top_name).exists():
                 raise FileExistsError(f"Refusing to overwrite existing path: {top_name}")

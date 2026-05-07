@@ -1,8 +1,9 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from vault import lock_path, unlock_path
+from vault import lock_path, main, unlock_path
 
 
 class VaultTests(unittest.TestCase):
@@ -45,9 +46,51 @@ class VaultTests(unittest.TestCase):
             source = root / "note.txt"
             source.write_text("classified", encoding="utf-8")
             vault_path = lock_path(str(source), "right-key")
+            vault_size_before = vault_path.stat().st_size
 
             with self.assertRaisesRegex(PermissionError, "Security Alert: Incorrect Key"):
                 unlock_path(str(vault_path), "wrong-key")
+            self.assertTrue(vault_path.exists())
+            self.assertEqual(vault_path.stat().st_size, vault_size_before)
+
+    def test_main_unlock_cli_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "entry.txt"
+            source.write_text("entry test", encoding="utf-8")
+            vault_path = lock_path(str(source), "cli-pass")
+
+            with patch("vault.getpass", return_value="cli-pass"):
+                code = main(["--unlock", str(vault_path)])
+
+            self.assertEqual(code, 0)
+            self.assertEqual((root / "entry.txt").read_text(encoding="utf-8"), "entry test")
+
+    def test_main_lock_cli_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "cli-lock.txt"
+            source.write_text("lock path", encoding="utf-8")
+
+            with patch("vault.getpass", side_effect=["pw123456", "pw123456"]):
+                code = main(["--lock", str(source)])
+
+            self.assertEqual(code, 0)
+            self.assertFalse(source.exists())
+            self.assertTrue((root / "cli-lock.txt.vault").exists())
+
+    def test_main_lock_password_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "bad-lock.txt"
+            source.write_text("mismatch", encoding="utf-8")
+
+            with patch("vault.getpass", side_effect=["pw-one", "pw-two"]):
+                code = main(["--lock", str(source)])
+
+            self.assertEqual(code, 2)
+            self.assertTrue(source.exists())
+            self.assertFalse((root / "bad-lock.txt.vault").exists())
 
 
 if __name__ == "__main__":
