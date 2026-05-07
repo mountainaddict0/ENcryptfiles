@@ -1,4 +1,4 @@
-# ENcryptfiles
+# EncryptFiles
 
 Standalone CLI vault tool for secure file/folder encryption and decryption on Kali Linux.
 

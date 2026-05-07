@@ -186,7 +186,7 @@ def decrypt_vault(vault_path: Path, output_path: Path, force: bool) -> None:
     try:
         metadata = json.loads(metadata_bytes.decode("utf-8"))
         payload_type = metadata["type"]
-        _ = metadata["name"]
+        metadata["name"]
         if payload_type not in {"file", "folder"}:
             raise KeyError
     except (ValueError, KeyError, TypeError):
@@ -246,9 +246,8 @@ def main() -> int:
         else:
             vault_path = Path(args.unlock).expanduser().resolve()
             override = Path(args.output).expanduser().resolve() if args.output else None
-            salt, nonce, metadata_bytes, _ = read_vault(vault_path)
+            _, _, metadata_bytes, _ = read_vault(vault_path)
             # Reuse parsed metadata for default output naming while avoiding duplicate parsing logic.
-            _ = salt, nonce
             metadata = json.loads(metadata_bytes.decode("utf-8"))
             output_path = pick_decrypt_target(vault_path, metadata, override)
             decrypt_vault(vault_path, output_path, args.force)
