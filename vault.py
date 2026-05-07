@@ -107,6 +107,7 @@ def normalize_name(path: Path) -> str:
 
 
 def read_input_payload(input_path: Path) -> tuple[str, str, bytes]:
+    """Return tuple: (payload_type, original_name, payload_bytes)."""
     if input_path.is_file():
         return "file", normalize_name(input_path), input_path.read_bytes()
     if input_path.is_dir():
@@ -152,6 +153,7 @@ def encrypt_path(input_path: Path, output_path: Path, force: bool) -> None:
 
 
 def read_vault(vault_path: Path) -> tuple[bytes, bytes, bytes, bytes]:
+    """Read vault and return tuple: (salt, nonce, metadata_bytes, ciphertext)."""
     with vault_path.open("rb") as source:
         magic = source.read(len(MAGIC))
         if magic != MAGIC:
@@ -186,6 +188,7 @@ def parse_vault_metadata(metadata_bytes: bytes) -> dict[str, str]:
 
 
 def pick_decrypt_target(vault_path: Path, metadata: dict, output_override: Path | None) -> Path:
+    """Choose decrypt output path using override, else stored original name."""
     if output_override is not None:
         return output_override
     return vault_path.with_name(metadata["name"])
