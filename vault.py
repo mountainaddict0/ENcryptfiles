@@ -24,6 +24,7 @@ MAGIC = b"VAULT1"
 SALT_LEN = 16
 NONCE_LEN = 12
 PBKDF2_ITERS = 600_000
+# OWASP guidance (2023+) recommends ~600k+ PBKDF2-HMAC-SHA256 iterations.
 KEY_LEN = 32
 
 
@@ -170,27 +171,39 @@ def read_vault(vault_path: Path) -> tuple[bytes, bytes, bytes, bytes]:
     return salt, nonce, metadata, ciphertext
 
 
+def parse_vault_metadata(metadata_bytes: bytes) -> dict[str, str]:
+    try:
+        metadata = json.loads(metadata_bytes.decode("utf-8"))
+        payload_type = metadata["type"]
+        name = metadata["name"]
+        if payload_type not in {"file", "folder"} or not isinstance(name, str) or not name:
+            raise KeyError
+        return metadata
+    except (ValueError, KeyError, TypeError):
+        raise VaultError("Vault metadata is invalid.") from None
+
+
 def pick_decrypt_target(vault_path: Path, metadata: dict, output_override: Path | None) -> Path:
     if output_override is not None:
         return output_override
     return vault_path.with_name(metadata["name"])
 
 
-def decrypt_vault(vault_path: Path, output_path: Path, force: bool) -> None:
+def decrypt_vault(
+    vault_path: Path,
+    output_path: Path,
+    force: bool,
+    vault_parts: tuple[bytes, bytes, bytes, bytes] | None = None,
+    metadata: dict[str, str] | None = None,
+) -> None:
     if not vault_path.is_file():
         raise VaultError(f"Vault file does not exist: {vault_path}")
     if output_path.exists() and not force:
         raise VaultError(f"Output already exists: {output_path} (use --force)")
 
-    salt, nonce, metadata_bytes, ciphertext = read_vault(vault_path)
-    try:
-        metadata = json.loads(metadata_bytes.decode("utf-8"))
-        payload_type = metadata["type"]
-        metadata["name"]
-        if payload_type not in {"file", "folder"}:
-            raise KeyError
-    except (ValueError, KeyError, TypeError):
-        raise VaultError("Vault metadata is invalid.") from None
+    salt, nonce, metadata_bytes, ciphertext = vault_parts if vault_parts else read_vault(vault_path)
+    parsed_metadata = metadata if metadata is not None else parse_vault_metadata(metadata_bytes)
+    payload_type = parsed_metadata["type"]
 
     password = getpass("Enter password: ")
     key = derive_key(password, salt)
@@ -204,8 +217,6 @@ def decrypt_vault(vault_path: Path, output_path: Path, force: bool) -> None:
     if payload_type == "file":
         output_path.write_bytes(payload)
     else:
-        if output_path.exists() and not output_path.is_dir():
-            raise VaultError("Folder output path exists and is not a directory.")
         with tempfile.TemporaryDirectory(dir=str(output_path.parent)) as temp_dir:
             temp_root = Path(temp_dir)
             safe_extract_tar_gz(payload, temp_root)
@@ -214,8 +225,6 @@ def decrypt_vault(vault_path: Path, output_path: Path, force: bool) -> None:
                 raise VaultError("Decrypted folder archive structure is invalid.")
             extracted_root = children[0]
             if output_path.exists():
-                if not force:
-                    raise VaultError(f"Output already exists: {output_path} (use --force)")
                 if output_path.is_dir():
                     shutil.rmtree(output_path)
                 else:
@@ -246,11 +255,10 @@ def main() -> int:
         else:
             vault_path = Path(args.unlock).expanduser().resolve()
             override = Path(args.output).expanduser().resolve() if args.output else None
-            _, _, metadata_bytes, _ = read_vault(vault_path)
-            # Reuse parsed metadata for default output naming while avoiding duplicate parsing logic.
-            metadata = json.loads(metadata_bytes.decode("utf-8"))
+            vault_parts = read_vault(vault_path)
+            metadata = parse_vault_metadata(vault_parts[2])
             output_path = pick_decrypt_target(vault_path, metadata, override)
-            decrypt_vault(vault_path, output_path, args.force)
+            decrypt_vault(vault_path, output_path, args.force, vault_parts=vault_parts, metadata=metadata)
     except VaultError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
