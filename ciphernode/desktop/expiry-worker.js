@@ -11,9 +11,9 @@ export const startExpiryWorker = ({ dbPool, onExpired, intervalMs = 1000 }) => {
         return [];
       }
       const ids = rows.map((row) => row.id);
-      // Placeholder list is derived from ids length; values remain parameterized.
-      const placeholders = ids.map(() => '?').join(',');
-      await conn.run(`DELETE FROM messages WHERE id IN (${placeholders})`, ids);
+      for (const id of ids) {
+        await conn.run('DELETE FROM messages WHERE id = ?', [id]);
+      }
       return ids;
     });
 

@@ -50,7 +50,7 @@ object FileCrypto {
         return when {
             mimeType.startsWith("image/") -> stripImageMetadata(bytes)
             mimeType == "text/plain" || mimeType == "application/json" -> bytes
-            else -> throw IllegalArgumentException("Unsupported document type. Add a sanitizer before upload.")
+            else -> throw IllegalArgumentException("Unsupported document type. Add a sanitizer before encryption.")
         }
     }
 

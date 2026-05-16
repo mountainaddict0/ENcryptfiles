@@ -35,7 +35,7 @@ const stripMetadata = async (file) => {
   if (file.type === 'text/plain' || file.type === 'application/json') {
     return file.arrayBuffer();
   }
-  throw new Error('Unsupported document type. Add a sanitizer before upload.');
+  throw new Error('Unsupported document type. Add a sanitizer before encryption.');
 };
 
 // Encrypts sanitized bytes locally before upload; key must be shared via E2EE.
