@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CipherNode</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Split-pane layout for conversations and active chat. -->
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar__header">
+          <h1>CipherNode</h1>
+          <span class="status" data-status data-state="offline">Offline</span>
+        </div>
+        <div class="sidebar__controls">
+          <label class="toggle">
+            <input type="checkbox" data-ephemeral-toggle />
+            <span>Ephemeral Mode</span>
+          </label>
+          <select data-ttl-select>
+            <option value="0">TTL: Off</option>
+            <option value="5000">TTL: 5s</option>
+            <option value="3600000">TTL: 1h</option>
+            <option value="86400000">TTL: 24h</option>
+          </select>
+        </div>
+        <div class="conversation-list" data-conversation-list>
+          <button class="conversation conversation--active">Primary Channel</button>
+          <button class="conversation">Security Pairing</button>
+        </div>
+      </aside>
+
+      <main class="chat">
+        <header class="chat__header">
+          <div>
+            <h2>Primary Channel</h2>
+            <p>Paired by numeric UID</p>
+          </div>
+        </header>
+
+        <section class="chat__messages" data-message-list>
+          <div class="message message--incoming">
+            <div class="message__meta">Partner · Normal Message</div>
+            <div class="message__body">Welcome to CipherNode.</div>
+          </div>
+          <div class="message message--outgoing message--attachment">
+            <div class="message__meta">You · Document Attachment</div>
+            <div class="message__body">Encrypted contract.pdf uploaded</div>
+          </div>
+          <div class="message message--expired">
+            <div class="message__meta">Ephemeral</div>
+            <div class="message__body">Message expired</div>
+          </div>
+        </section>
+
+        <form class="chat__composer" data-message-form>
+          <input type="text" placeholder="Type a secure message" data-message-input />
+          <input type="file" data-file-input />
+          <button type="submit">Send</button>
+        </form>
+      </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
