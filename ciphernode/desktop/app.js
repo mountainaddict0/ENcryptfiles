@@ -38,6 +38,9 @@ const getLocalUid = () => {
   return uid;
 };
 
+// Node/Electron Buffer is used for base64 encoding before storage or transport.
+const toBase64 = (bytes) => Buffer.from(bytes).toString('base64');
+
 // Renders a message bubble with attachment and expiry states.
 const renderMessage = ({ id, senderId, body, isOutgoing, fileName, expired }) => {
   const item = document.createElement('div');
@@ -118,8 +121,6 @@ const createWebSocketManager = ({ uid, onMessage }) => {
 };
 
 // Bootstraps database, WebSocket, and expiry worker.
-const toBase64 = (bytes) => Buffer.from(bytes).toString('base64');
-
 const initialize = async () => {
   const uid = getLocalUid();
   updateStatus('Connecting...', 'offline');
