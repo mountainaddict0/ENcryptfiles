@@ -1,0 +1,259 @@
+/* CipherNode responsive dark-mode layout styles. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0f17;
+  --panel: #121826;
+  --panel-alt: #1a2334;
+  --border: #243148;
+  --text: #e5edf7;
+  --muted: #92a4bf;
+  --accent: #4f8cff;
+  --danger: #e35d6a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: min(320px, 35vw);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.sidebar__header {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.status[data-state='online']::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4cd964;
+}
+
+.status[data-state='offline']::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.sidebar__controls {
+  padding: 0 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggle {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+select {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 24px;
+}
+
+.conversation {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  text-align: left;
+  border-radius: 12px;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.conversation--active {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, 0.1);
+}
+
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.chat__header {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.chat__messages {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.message {
+  max-width: min(520px, 70vw);
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--panel-alt);
+  position: relative;
+  animation: fadeIn 0.2s ease;
+}
+
+.message__meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.message__attachment {
+  margin-left: 12px;
+  color: var(--accent);
+}
+
+.message--incoming {
+  align-self: flex-start;
+}
+
+.message--outgoing {
+  align-self: flex-end;
+  background: rgba(79, 140, 255, 0.2);
+}
+
+.message--attachment {
+  border: 1px solid var(--accent);
+}
+
+.message--expired {
+  opacity: 0.5;
+  background: rgba(227, 93, 106, 0.15);
+  border: 1px dashed var(--danger);
+}
+
+.message--expired::after {
+  content: 'Expired';
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 0.65rem;
+  color: var(--danger);
+}
+
+.chat__composer {
+  padding: 16px 24px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.chat__composer input[type='text'] {
+  flex: 1;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.chat__composer input[type='file'] {
+  color: var(--muted);
+}
+
+.chat__composer button {
+  background: var(--accent);
+  color: #081427;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chat__messages {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 540px) {
+  .chat__composer {
+    flex-direction: column;
+  }
+
+  .message {
+    max-width: 100%;
+  }
+}

@@ -2,6 +2,13 @@
 
 `vault.py` is a standalone CLI tool to encrypt and decrypt files/folders.
 
+## CipherNode foundation assets
+
+The `ciphernode/` directory contains foundational, security-focused code artifacts for the CipherNode
+secure messaging application (SQLite schema/handlers, responsive desktop UI, cryptographic file
+processors, and disappearing-message workers). These files are reference implementations intended to
+be integrated into mobile or desktop builds.
+
 ## What it does
 
 - AES-256-GCM encryption (`cryptography.hazmat`)
