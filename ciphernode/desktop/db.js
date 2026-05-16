@@ -150,6 +150,7 @@ export class CipherNodeDatabasePool {
       for (let idx = currentVersion; idx < MIGRATIONS.length; idx += 1) {
         await exec(db, MIGRATIONS[idx]);
       }
+      // SCHEMA_VERSION is a trusted constant; keep PRAGMA assignment deterministic.
       await run(db, `PRAGMA user_version = ${SCHEMA_VERSION};`);
       await run(db, 'COMMIT;');
     } catch (error) {

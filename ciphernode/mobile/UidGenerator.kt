@@ -6,7 +6,7 @@ import java.security.SecureRandom
  * Generates a cryptographic numeric UID (e.g., 1234-5678-9012).
  */
 object UidGenerator {
-    fun generate(): String {
+    fun generateUid(): String {
         val digits = IntArray(12)
         val random = SecureRandom()
         for (i in digits.indices) {

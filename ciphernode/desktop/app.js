@@ -45,13 +45,22 @@ const renderMessage = ({ id, senderId, body, isOutgoing, fileName, expired }) =>
     expired ? ' message--expired' : ''
   }`;
   item.dataset.messageId = id;
-  item.innerHTML = `
-    <div class="message__meta">
-      <span>${senderId}</span>
-      ${fileName ? `<span class="message__attachment">📎 ${fileName}</span>` : ''}
-    </div>
-    <div class="message__body">${body}</div>
-  `;
+  const meta = document.createElement('div');
+  meta.className = 'message__meta';
+  const sender = document.createElement('span');
+  sender.textContent = senderId;
+  meta.appendChild(sender);
+  if (fileName) {
+    const attachment = document.createElement('span');
+    attachment.className = 'message__attachment';
+    attachment.textContent = `📎 ${fileName}`;
+    meta.appendChild(attachment);
+  }
+  const messageBody = document.createElement('div');
+  messageBody.className = 'message__body';
+  messageBody.textContent = body;
+  item.appendChild(meta);
+  item.appendChild(messageBody);
   elements.messageList.appendChild(item);
   elements.messageList.scrollTop = elements.messageList.scrollHeight;
 };
@@ -68,11 +77,12 @@ const createWebSocketManager = ({ uid, onMessage }) => {
   let retryDelay = WS_RETRY_BASE_MS;
 
   const connect = () => {
-    socket = new WebSocket(`wss://ciphernode.local/ws?uid=${encodeURIComponent(uid)}`);
+    socket = new WebSocket('wss://ciphernode.local/ws');
 
     socket.onopen = () => {
       retryDelay = WS_RETRY_BASE_MS;
       updateStatus('Connected', 'online');
+      socket.send(JSON.stringify({ type: 'handshake', uid }));
     };
 
     socket.onmessage = (event) => {

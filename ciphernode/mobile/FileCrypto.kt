@@ -42,7 +42,7 @@ object FileCrypto {
 
     private fun generateKey(): SecretKey {
         val generator = KeyGenerator.getInstance("AES")
-        generator.init(256)
+        generator.init(256, SecureRandom())
         return generator.generateKey()
     }
 
